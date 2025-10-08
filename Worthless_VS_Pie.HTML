@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>$Worthless VS $PIE – 1 ¢ Dash</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{--bg:#111;--glass:#ffffff22;--worthless:#9c27b0;--pie:#ffeb3b;}
+    html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    h1{margin-bottom:1rem;font-weight:800;letter-spacing:-1px;}
+    .jugs{display:flex;gap:3rem;flex-wrap:wrap;align-items:flex-end;}
+    .jug{position:relative;width:140px;height:500px;text-align:center;}
+    .jug svg{width:100%;height:100%;}
+    .ruler{position:absolute;left:-25px;top:50px;height:420px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:#aaa;}
+    .label{position:absolute;bottom:-30px;width:100%;font-size:1.2rem;font-weight:600;}
+    .value{position:absolute;bottom:-55px;width:100%;font-size:1rem;color:#aaa;}
+    .water{transition:height .5s cubic-bezier(.22,1,.36,1);}
+    .splash{position:absolute;width:9px;height:9px;border-radius:50%;opacity:0;}
+    @keyframes splash{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-50px) scale(0);opacity:0;}}
+  </style>
+</head>
+<body>
+  <h1>$Worthless VS $PIE – 1 ¢ Dash</h1>
+
+  <div class="jugs">
+    <!-- WORTHLESS -->
+    <div class="jug" id="jug1">
+      <div class="ruler">
+        <span>1 ¢</span><span>0.9 ¢</span><span>0.8 ¢</span><span>0.7 ¢</span><span>0.6 ¢</span><span>0.5 ¢</span><span>0.4 ¢</span><span>0.3 ¢</span><span>0.2 ¢</span><span>0.1 ¢</span><span>0 ¢</span>
+      </div>
+      <svg viewBox="0 0 140 500">
+        <defs><clipPath id="clip1"><rect x="10" y="50" width="120" height="420" rx="8"/></clipPath></defs>
+        <path d="M20 50h100c5 0 10 5 10 10v400c0 5-5 10-10 10H20c-5 0-10-5-10-10V60c0-5 5-10 10-10z" fill="none" stroke="var(--glass)" stroke-width="3"/>
+        <g id="worthWaterGroup" clip-path="url(#clip1)"></g>
+      </svg>
+      <div class="label">$Worthless</div>
+      <div class="value" id="val1">$0</div>
+    </div>
+
+    <!-- PIE -->
+    <div class="jug" id="jug2">
+      <div class="ruler">
+        <span>1 ¢</span><span>0.9 ¢</span><span>0.8 ¢</span><span>0.7 ¢</span><span>0.6 ¢</span><span>0.5 ¢</span><span>0.4 ¢</span><span>0.3 ¢</span><span>0.2 ¢</span><span>0.1 ¢</span><span>0 ¢</span>
+      </div>
+      <svg viewBox="0 0 140 500">
+        <defs><clipPath id="clip2"><rect x="10" y="50" width="120" height="420" rx="8"/></clipPath></defs>
+        <path d="M20 50h100c5 0 10 5 10 10v400c0 5-5 10-10 10H20c-5 0-10-5-10-10V60c0-5 5-10 10-10z" fill="none" stroke="var(--glass)" stroke-width="3"/>
+        <g id="pieWaterGroup" clip-path="url(#clip2)"></g>
+      </svg>
+      <div class="label">$PIE</div>
+      <div class="value" id="val2">$0</div>
+    </div>
+  </div>
+
+<script>
+  const TOKENS = {
+    worthless: { mint: 'iUdvUaxyRHh8PYVcmkgBpSJu5evpW6jsSLv8RCpmoon', color: '#9c27b0', grp: 'worthWaterGroup' },
+    pie:       { mint: 'KyxLLGRvJZDRoAFS6PZ8geq5WNzY1b4nCwsokYJtYms', color: '#ffeb3b', grp: 'pieWaterGroup' }
+  };
+  function setWater(groupId, h, color) {
+    const g = document.getElementById(groupId);
+    g.innerHTML = `<rect x="10" y="${470-h}" width="120" height="${h}" fill="${color}" opacity="0.85"/>`;
+  }
+  function splash(jugId, color) {
+    const jug = document.getElementById(jugId);
+    for (let i = 0; i < 20; i++) {
+      const s = document.createElement('div'); s.className = 'splash'; s.style.background = color;
+      s.style.left = 50 + Math.random() * 40 + 'px'; s.style.top = '50px'; s.style.animation = 'splash .7s forwards';
+      jug.appendChild(s); setTimeout(() => s.remove(), 700);
+    }
+  }
+  async function fetchPrice(mint) {
+    const url = `https://api.dexscreener.com/latest/dex/tokens/${mint}`;
+    const r = await fetch(url); const j = await r.json();
+    if (!j.pairs || !j.pairs.length) return 0;
+    return parseFloat(j.pairs[0].priceUsd) || 0;
+  }
+  let old1 = 0, old2 = 0;
+  async function updateJugs() {
+    const p1 = await fetchPrice(TOKENS.worthless.mint);
+    const p2 = await fetchPrice(TOKENS.pie.mint);
+    const max = 0.01; // 1 ¢ ceiling
+    const h1 = Math.min(p1, max) * 420 / max;
+    const h2 = Math.min(p2, max) * 420 / max;
+    setWater(TOKENS.worthless.grp, h1, TOKENS.worthless.color);
+    setWater(TOKENS.pie.grp, h2, TOKENS.pie.color);
+    if (p1 >= 0.01 && old1 < 0.01) splash('jug1', TOKENS.worthless.color);
+    if (p2 >= 0.01 && old2 < 0.01) splash('jug2', TOKENS.pie.color);
+    document.getElementById('val1').textContent = `$${p1.toLocaleString(undefined, { maximumFractionDigits: 5 })}`;
+    document.getElementById('val2').textContent = `$${p2.toLocaleString(undefined, { maximumFractionDigits: 5 })}`;
+    old1 = p1; old2 = p2;
+  }
+  updateJugs(); setInterval(updateJugs, 20000);
+</script>
+</body>
+</html>
